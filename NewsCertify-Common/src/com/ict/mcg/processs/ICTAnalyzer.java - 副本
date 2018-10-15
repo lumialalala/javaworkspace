@@ -1,0 +1,100 @@
+/**
+ * Old ICTAnalyzer
+ */
+package com.ict.mcg.processs;
+
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.StringTokenizer;
+
+import org.ansj.domain.Term;
+import org.ansj.splitWord.analysis.ToAnalysis;
+
+import kevin.zhang.NLPIR;
+
+public class ICTAnalyzer {
+	public static final int POS_YES = 1;
+	public static final int POS_NO = 0;
+
+	/**
+	 * 只做分词
+	 * 
+	 * @param str
+	 * @param postTag
+	 * @return
+	 * 
+	 */
+	public static ArrayList<String> analyzeParagraph(String str, int postTag) {
+
+		ArrayList<String> rst = new ArrayList<String>();
+
+		if (NLPLoader.load()) {
+			if (str != null && str.length() > 0) {
+
+				NLPIR testNLPIR = new NLPIR();
+
+				byte nativeBytes[];
+				try {
+					nativeBytes = testNLPIR.NLPIR_ParagraphProcess(str
+							.getBytes("UTF-8"), postTag);
+
+					String nativeStr = new String(nativeBytes, 0,
+							nativeBytes.length, "UTF-8");
+
+					StringTokenizer token = new StringTokenizer(nativeStr);
+					while (token.hasMoreTokens()) {
+						rst.add(token.nextToken());
+					}
+
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+
+//				NLPIR.NLPIR_Exit();
+			}
+		}
+
+		if (rst.size() > 0) {
+			String last = rst.get(rst.size() - 1);
+			int size = last.length();
+			int lastChar = (int) (last.charAt(size - 1));
+			if (lastChar == 0) { // 分词的返回结果中，最后一个String的最后一个字符是空，将其处理掉
+				last = last.substring(0, last.length() - 1);
+				rst.remove(rst.size() - 1);
+				rst.add(last);
+			}
+		}
+		return rst;
+	}
+
+	public static ArrayList<String> analyzeParagraph_ansj(String str, int postTag) {
+
+		ArrayList<String> rst = new ArrayList<String>();
+		HashSet<String> hash = new HashSet<String>();
+		List<Term> parse = ToAnalysis.parse(str);
+
+		if(postTag == 1){
+			for(Term t : parse)
+				rst.add(t.toString());
+		}
+		else if(postTag == 0){
+			for(Term t: parse){
+				if(!rst.contains(t.getName().trim()))
+					rst.add(t.getName().trim());
+			}
+		}
+		return rst;
+	}
+	
+	public static void main(String[] args){
+		String str = "今早看到谢霆锋和王菲复合的新闻真是有点惊讶，好了，不带感情色彩的科普下谢霆锋王菲张柏芝这十几年来的爱恨纠葛，一切从15年前说起·";
+		ArrayList<String> arr = analyzeParagraph(str, 1);
+		for(String s : arr){
+			System.out.println(s);
+		}
+	}
+	
+
+}
